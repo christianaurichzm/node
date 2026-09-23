@@ -426,7 +426,9 @@ suite('DatabaseSync.prototype.createModule()', () => {
         [Symbol.iterator]() { return this; },
         next() { db.close(); return { value: [1], done: false }; },
       })],
-      ['a row getter', (db) => () => [{ get 0() { db.close(); return 1; } }]],
+      ['a row getter', (db) => () => [
+        Object.defineProperty([], 0, { get() { db.close(); return 1; } }),
+      ]],
     ]) {
       test(`throws when close() is called from ${name}`, () => {
         const db = new DatabaseSync(':memory:');
@@ -667,6 +669,16 @@ suite('DatabaseSync.prototype.createModule()', () => {
         'next() returns a non-object',
         () => ({ [Symbol.iterator]() { return this; }, next() { return 42; } }),
         /next\(\) method must return an object/,
+      ],
+      [
+        'a row is a non-array object',
+        function*() { yield { 0: 1 }; },
+        /"options\.rows" iterator must yield arrays/,
+      ],
+      [
+        'a row is a primitive',
+        function*() { yield [1]; yield 42; },
+        /"options\.rows" iterator must yield arrays/,
       ],
     ]) {
       test(`reports an error when ${name}`, () => {

@@ -1431,6 +1431,10 @@ int VirtualTableModule::xNext(sqlite3_vtab_cursor* pCursor) {
              .ToLocal(&value_val)) {
       return mod->PropagateJSError();
     }
+    if (!value_val->IsArray()) {
+      return ReportProtocolError(
+          pCursor->pVtab, "The \"options.rows\" iterator must yield arrays");
+    }
 
     cursor->current_row.Reset(isolate, value_val);
   }
@@ -1475,11 +1479,7 @@ int VirtualTableModule::xColumn(sqlite3_vtab_cursor* pCursor,
   CallbackDepthGuard callback_guard(mod->db_.get());
 
   Local<Value> row = cursor->current_row.Get(isolate);
-  if (!row->IsObject()) {
-    sqlite3_result_null(ctx);
-    return SQLITE_OK;
-  }
-
+  DCHECK(row->IsArray());
   Local<Object> row_obj = row.As<Object>();
   Local<Value> col_val;
   if (!row_obj->Get(env->context(), mod->col_index_map_[i]).ToLocal(&col_val)) {
