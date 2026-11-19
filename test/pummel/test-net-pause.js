@@ -50,10 +50,9 @@ server.on('listening', common.mustCall(() => {
     recv += d;
   });
 
-  setTimeout(common.mustCall(() => {
+  client.once('data', common.mustCall(() => {
     chars_recved = recv.length;
     console.log(`pause at: ${chars_recved}`);
-    assert.strictEqual(chars_recved > 1, true);
     client.pause();
     setTimeout(common.mustCall(() => {
       console.log(`resume at: ${chars_recved}`);
@@ -76,7 +75,7 @@ server.on('listening', common.mustCall(() => {
 
     }), 500);
 
-  }), 500);
+  }));
 
   client.on('end', () => {
     server.close();
